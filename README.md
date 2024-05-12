@@ -6,7 +6,7 @@
 The results of this model are entirely derived from deep learning predictions of historical data and do not constitute any investment advice. The author will not be responsible for any investment losses caused by open source.
 
 # parameter
-'ticker_symbol': By modifying this parameter, you can modify the symbol you want to predict, as long as it is a symbol in the 'Yahoo API', but the model needs to be adjusted according to different symbols.
+- 'ticker_symbol': By modifying this parameter, you can modify the symbol you want to predict, as long as it is a symbol in the 'Yahoo API', but the model needs to be adjusted according to different symbols.
 
 ‘future_steps’: By adjusting this parameter, you can change the number of days you want to predict, but the accuracy will drop significantly after more than 30 days. It is recommended that long term predictions directly use the historical data of the weekly period for modeling.
 
