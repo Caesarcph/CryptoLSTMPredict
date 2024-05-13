@@ -2,6 +2,14 @@
 
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://github.com/Naereen/badges/)
 
+# Requirements
+numpy==1.26.3
+pandas==2.2.0
+yfinance==0.2.37
+matplotlib==3.8.2
+scikit-learn==1.4.1.post1
+tensorflow==2.15.0
+
 # Announcement
 The results of this model are entirely derived from deep learning predictions of historical data and do not constitute any investment advice. The author will not be responsible for any investment losses caused by open source.
 
