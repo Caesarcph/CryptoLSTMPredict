@@ -4,10 +4,15 @@
 
 # Requirements
 numpy==1.26.3
+
 pandas==2.2.0
+
 yfinance==0.2.37
+
 matplotlib==3.8.2
+
 scikit-learn==1.4.1.post1
+
 tensorflow==2.15.0
 
 # Announcement
