@@ -66,3 +66,8 @@ The model uses mean squared error (MSE) as the loss function and uses the Adam o
 `early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1)`
 
 Use the Early Stopping strategy to prevent overfitting, monitor the loss value during the training process, and automatically stop training and retain the best model if the loss does not improve within 10 consecutive training cycles.
+
+#Predict
+
+If you want to make real predictions, just change `:-future_steps` in `dataset = ETH_Data.iloc[:-future_steps, 0:4].values` to `:` and delete the contents of the evaluate model part. .
+
