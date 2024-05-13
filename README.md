@@ -36,9 +36,7 @@ The results of this model are entirely derived from deep learning predictions of
     Dropout(0.2),
     Dense(25, activation='relu', kernel_regularizer=l2(0.01)),
     Dense(4) 
-])
-model.compile(loss='mean_squared_error', optimizer='adam')
-early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1)`
+])`
 
 ## Model architecture
 
@@ -56,10 +54,12 @@ This model uses a sequence-to-sequence (Seq2Seq) architecture, which is suitable
 
 6. **Output layer**: The last layer is a Dense layer with 4 output units, corresponding to the prediction results of the model.
 
+`model.compile(loss='mean_squared_error', optimizer='adam')`
 ## Compile model
 
 The model uses mean squared error (MSE) as the loss function and uses the Adam optimizer for parameter optimization.
 
+`early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1)`
 ## Training Control
 
 Use the Early Stopping strategy to prevent overfitting, monitor the loss value during the training process, and automatically stop training and retain the best model if the loss does not improve within 10 consecutive training cycles.
