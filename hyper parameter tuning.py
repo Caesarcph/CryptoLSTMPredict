@@ -11,6 +11,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import keras_tuner as kt
 from dtaidistance import dtw
 
+# Function to create a new dataset with given look-back period
 def new_dataset(dataset, look_back=1):
     dataX, dataY = [], []
     for i in range(len(dataset) - look_back - 1):
@@ -19,9 +20,10 @@ def new_dataset(dataset, look_back=1):
         dataY.append(dataset[i + look_back, 0:4])
     return np.array(dataX), np.array(dataY)
 
-input_dim = 4
-look_back = 1
+input_dim = 4  # Number of input features
+look_back = 1  # Look-back period for the LSTM
 
+# Function to compute DTW (Dynamic Time Warping) distance
 def dtw_metric(y_true, y_pred):
     y_true = tf.reshape(y_true, (-1,))
     y_pred = tf.reshape(y_pred, (-1,))
@@ -34,6 +36,7 @@ def dtw_metric(y_true, y_pred):
     distance = tf.py_function(func=numpy_dtw, inp=[y_true, y_pred], Tout=tf.float32)
     return distance
 
+# Function to build the LSTM model with hyperparameter tuning
 def build_model(hp):
     model = Sequential()
     model.add(LSTM(units=hp.Int('units_1', min_value=32, max_value=128, step=32),
@@ -42,10 +45,12 @@ def build_model(hp):
     model.add(Dropout(hp.Float('dropout_1', min_value=0.1, max_value=0.5, step=0.1)))
     model.add(LSTM(units=hp.Int('units_2', min_value=32, max_value=128, step=32), return_sequences=True))
     model.add(Dropout(hp.Float('dropout_2', min_value=0.1, max_value=0.5, step=0.1)))
-    model.add(LSTM(units=hp.Int('units_3', min_value=32, max_value=128, step=32), return_sequences=False))
+    model.add(LSTM(units=hp.Int('units_3', min_value=32, max_value=128, step=32), return_sequences=True))
     model.add(Dropout(hp.Float('dropout_3', min_value=0.1, max_value=0.5, step=0.1)))
+    model.add(LSTM(units=hp.Int('units_4', min_value=32, max_value=128, step=32), return_sequences=False))
+    model.add(Dropout(hp.Float('dropout_4', min_value=0.1, max_value=0.5, step=0.1)))
     model.add(Dense(32, activation=hp.Choice('dense_activation', values=['relu', 'tanh', 'sigmoid']), kernel_regularizer=l2(0.01)))
-    model.add(Dense(4)) 
+    model.add(Dense(4))  # Output layer with 4 units
     
     model.compile(loss=hp.Choice('loss_function', values=['mean_squared_error', 'mean_absolute_error', 'huber_loss']),
                   optimizer=hp.Choice('optimizer', values=['adam', 'nadam', 'rmsprop', 'sgd']),
@@ -53,7 +58,7 @@ def build_model(hp):
     
     return model
 
-# Hyperparameter tuning
+# Hyperparameter tuning using Keras Tuner
 tuner = kt.RandomSearch(
     hypermodel=build_model,
     objective=kt.Objective('val_dtw_metric', direction='min'),
@@ -63,13 +68,14 @@ tuner = kt.RandomSearch(
     project_name='lstm_hyperparam_tuning'
 )
 
-ticker_symbol = 'ETH-USD'
-future_steps = 12
+# Define the ticker symbol and future steps
+ticker_symbol = 'GC=F'
+future_steps = 480
 np.random.seed(7)
 
 # Importing dataset
 ETH_Ticker = yf.Ticker(ticker_symbol)
-ETH_Data = ETH_Ticker.history(period="max",interval="1wk")
+ETH_Data = ETH_Ticker.history(period="max", interval="1wk")
 scaler = MinMaxScaler(feature_range=(0, 1))
 dataset = ETH_Data.iloc[:-future_steps, 0:4].values
 scaled_data = scaler.fit_transform(dataset)
@@ -77,12 +83,20 @@ scaled_data = scaler.fit_transform(dataset)
 # Early stopping callback
 early_stopping = EarlyStopping(monitor='val_dtw_metric', patience=10, verbose=1)
 
-# Function to generate trainX and trainY based on current hyperparameters
+# Function to run hyperparameter search and model training
 def run_tuner_search(tuner, scaled_data, early_stopping):
     trainX, trainY = new_dataset(scaled_data, look_back)
     trainX = np.reshape(trainX, (trainX.shape[0], trainX.shape[1], input_dim))
-    tuner.search(x=trainX, y=trainY, epochs=250, batch_size=32, validation_split=0.1, callbacks=[early_stopping])
 
+    # Manually split the data to ensure time order is maintained
+    train_size = int(len(trainX) * 0.9)
+    trainX_split, valX_split = trainX[:train_size], trainX[train_size:]
+    trainY_split, valY_split = trainY[:train_size], trainY[train_size:]
+
+    tuner.search(x=trainX_split, y=trainY_split, epochs=250, batch_size=32, 
+                 validation_data=(valX_split, valY_split), callbacks=[early_stopping])
+
+# Run hyperparameter search
 run_tuner_search(tuner, scaled_data, early_stopping)
 
 # Get the optimal hyperparameters
@@ -92,11 +106,18 @@ best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 trainX, trainY = new_dataset(scaled_data, look_back)
 trainX = np.reshape(trainX, (trainX.shape[0], trainX.shape[1], input_dim))
 
-model = build_model(best_hps)
-history = model.fit(trainX, trainY, epochs=250, batch_size=32, validation_split=0.1, verbose=2, callbacks=[early_stopping])
+# Manually split the data to ensure time order is maintained
+train_size = int(len(trainX) * 0.9)
+trainX_split, valX_split = trainX[:train_size], trainX[train_size:]
+trainY_split, valY_split = trainY[:train_size], trainY[train_size:]
 
+model = build_model(best_hps)
+history = model.fit(trainX_split, trainY_split, epochs=250, batch_size=32, 
+                    validation_data=(valX_split, valY_split), verbose=2, callbacks=[early_stopping])
+
+# Predict future values
 predictedValues = np.array([])
-currentStep = trainX[-1:]
+currentStep = scaled_data[-look_back:].reshape(1, look_back, input_dim)
 
 for i in range(future_steps):
     nextStep = model.predict(currentStep)
@@ -107,9 +128,12 @@ for i in range(future_steps):
     model.fit(trainX, trainY, epochs=2, batch_size=32, verbose=2)
     currentStep = nextStepReshaped
 
+# Reshape predicted values and invert scaling
 predictedValues = np.array(predictedValues).reshape(-1, 4)
 result = scaler.inverse_transform(predictedValues)
 result = pd.DataFrame(result, columns=['Open', 'High', 'Low', 'Close'])
+
+# Plotting the results
 plt.figure(figsize=(16, 8))
 plt.plot(ETH_Data.iloc[-future_steps:, 0:4], label='Actual', color='blue')
 ETH_Data.iloc[-future_steps:, 0:4] = result
