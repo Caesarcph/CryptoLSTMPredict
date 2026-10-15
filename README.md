@@ -1,24 +1,25 @@
 ![waving](https://capsule-render.vercel.app/api?type=waving&height=200&text=Predict%20Crypto%20Price%20With%20LSTM&fontAlign=30&fontAlignY=40&color=gradient&fontSize=30)
 
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://github.com/Naereen/badges/)
+[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
-# Requirements
-numpy==1.26.3
+> **Status:** 2024 learning project, no longer maintained. Kept as a record of early work with LSTM time-series forecasting.
 
-pandas==2.2.0
+# Files
 
-yfinance==0.2.37
+- `lstm_forecast.ipynb` – downloads daily OHLC data with yfinance, trains the stacked LSTM below and plots predicted vs. actual prices for the last `future_steps` days.
+- `hyperparameter_tuning.py` – Keras Tuner random search over the LSTM hyperparameters, using a DTW (dynamic time warping) distance as the tuning objective.
 
-matplotlib==3.8.2
+# Setup
 
-scikit-learn==1.4.1.post1
-
-tensorflow==2.15.0
+```bash
+pip install -r requirements.txt
+jupyter notebook lstm_forecast.ipynb
+```
 
 # Announcement
-The results of this model are entirely derived from deep learning predictions of historical data and do not constitute any investment advice. The author will not be responsible for any investment losses caused by open source.
+The results of this model are entirely derived from deep learning predictions of historical data and do not constitute any investment advice. The author is not responsible for any investment losses resulting from its use.
 
-# parameter
+# Parameters
 - `ticker_symbol`: By modifying this parameter, you can modify the symbol you want to predict, as long as it is a symbol in the 'Yahoo API', but the model needs to be adjusted according to different symbols.
 
 - `future_steps`: By adjusting this parameter, you can change the number of days you want to predict, but the accuracy will drop significantly after more than 30 days. It is recommended that long term predictions directly use the historical data of the weekly period for modeling.
@@ -40,7 +41,7 @@ The results of this model are entirely derived from deep learning predictions of
 
 ## Model architecture
 
-This model uses a sequence-to-sequence (Seq2Seq) architecture, which is suitable for processing time series data. The model mainly includes the following parts:
+This model is a stacked LSTM regressor: it reads `look_back` days of OHLC data and predicts the next day's four values. The model mainly includes the following parts:
 
 1. **LSTM Layer**: The first layer is a Long Short-Term Memory (LSTM) layer with 100 units. This layer is configured to return sequences so that the output of each time step can be passed to the next layer. It accepts input data of shape `(look_back, 4)`, where `look_back` is the number of time steps and 4 is the number of features.
 
@@ -69,5 +70,5 @@ Use the Early Stopping strategy to prevent overfitting, monitor the loss value d
 
 # Predict
 
-If you want to make real predictions, just change `:-future_steps` in `dataset = ETH_Data.iloc[:-future_steps, 0:4].values` to `:` and delete the contents of the evaluate model part. .
+If you want to make real predictions, just change `:-future_steps` in `dataset = ETH_Data.iloc[:-future_steps, 0:4].values` to `:` and delete the evaluate-model section.
 
